@@ -2,7 +2,7 @@
 
 A modern, opinionated FastAPI boilerplate for building high-performance APIs with best practices out of the box.
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/mubashirsidiki/FastCrate.git
@@ -22,24 +22,28 @@ uv add package_name
 uv run python main.py
 ```
 
-# Test the app
+> ⚠️ **Note**: If OneDrive causes issues, use:
+> ```bash
+> uv sync --link-mode=copy
+> ```
 
-First go to http://localhost:8000/docs
+## 🧪 Testing the Application
 
-GET `/api/v1/healthcheck` - Health Check
+### Interactive API Documentation
+First, visit the FastAPI interactive documentation:
+- **URL**: http://localhost:8000/docs
 
+### Health Check Endpoint
+Test if the application is running properly:
+- **Method**: GET
+- **Endpoint**: `/api/v1/healthcheck`
+- **Description**: Health Check
 
-> ⚠️ If OneDrive causes issues, use:
+## 📊 Logger Service
 
-```bash
-uv sync --link-mode=copy
-```
+Access the built-in logger service to view application logs:
 
-## Logger Service
+- **URL**: http://localhost:8000/api/v1/logs
 
-If you want to use logger services visit:
-
-http://localhost:8000/api/v1/logs
-
-> 💡 **Note**: If after clicking the "Fetch Logs" button you see nothing, try switching to incognito mode in your browser.
+> 💡 **Tip**: If after clicking the "Fetch Logs" button you see nothing, try switching to incognito mode in your browser.
 
