@@ -188,7 +188,7 @@ wheels = [
 ]
 
 [[package]]
-name = "faststart"
+name = "fastcrate"
 version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
