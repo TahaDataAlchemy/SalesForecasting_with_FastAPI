@@ -171,3 +171,74 @@ async def get_customer_sales_forecast(
         LOG.error(f"Error generating forecast: {e}", extra={"model_module": "Arima"})
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.get("/monthly_sales/city_wise")
+async def get_city_sales_forecast(
+    city_name: str = Query(..., description="City name to filter"),
+    months_ahead: int = Query(3, description="Number of months to forecast (default=3)")
+):
+    """
+    Forecast monthly sales for a given city using ARIMA.
+    """
+    try:
+        # Fetch sales data
+        df = run_query(SalesQuery.city_wise_sales(session).statement)
+        if df.empty:
+            raise HTTPException(status_code=404, detail="No sales data found")
+
+        # Normalize city name
+        df["city"] = df["city"].astype(str).str.strip().str.lower()
+        city = city_name.strip().lower()
+
+        # Filter for the requested city
+        df = df[df["city"] == city]
+        if df.empty:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No sales data found for city '{city_name}'"
+            )
+
+        # Convert month column → datetime
+        df["month"] = pd.to_datetime(df["month"], utc=True).dt.tz_localize(None)
+
+        # Aggregate sales by month
+        ts = df.groupby("month")["total_sales"].sum().sort_index()
+
+        if len(ts) < 3:
+            raise HTTPException(
+                status_code=400,
+                detail="Not enough historical data for forecasting"
+            )
+
+        # Fit ARIMA model
+        model = ARIMA(ts, order=(1, 1, 1))
+        model_fit = model.fit()
+
+        # Forecast
+        forecast = model_fit.forecast(steps=months_ahead)
+
+        # Future month labels
+        forecast_index = pd.date_range(
+            start=ts.index[-1] + pd.offsets.MonthBegin(1),
+            periods=months_ahead,
+            freq="MS"
+        )
+
+        forecast_df = pd.DataFrame({
+            "month": forecast_index.strftime("%b-%Y"),
+            "forecasted_sales": forecast.values
+        })
+
+        return {
+            "city": city_name,
+            "last_known_month": ts.index[-1].strftime("%b-%Y"),
+            "history": ts.reset_index()
+                        .assign(month=ts.index.strftime("%b-%Y"))
+                        .to_dict(orient="records"),
+            "forecast": forecast_df.to_dict(orient="records")
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        LOG.error(f"Error generating city forecast: {e}", extra={"model_module": "Arima"})
+        raise HTTPException(status_code=500, detail="Internal server error")
