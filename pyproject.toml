@@ -15,4 +15,8 @@ dependencies = [
     "gunicorn (>=23.0.0,<24.0.0) ; sys_platform == \"linux\"",
     "openai (>=1.78.1,<2.0.0)",
     "api-analytics[fastapi]>=1.2.7",
+    "sqlalchemy>=2.0.43",
+    "psycopg2-binary>=2.9.10",
+    "pandas>=2.3.3",
+    "statsmodels>=0.14.5",
 ]

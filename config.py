@@ -19,9 +19,21 @@ class ConfigClass(BaseModel):
     version: str
     api_key: Optional[str]
 
+    database_user:str
+    database_password:str
+    database_host:str
+    database_port:int
+    database_name:str
+
 CONFIG = ConfigClass(
     app_name = name,
     description = description,
     version = version,
-    api_key = getenv("API_KEY") if getenv("API_KEY") else None
+    api_key = getenv("API_KEY") if getenv("API_KEY") else None,
+
+    database_user=getenv("database_user"),
+    database_password=getenv("database_password"),
+    database_host=getenv("database_host"),
+    database_port=int(getenv("database_port")),
+    database_name=getenv("database_name"),
 )
