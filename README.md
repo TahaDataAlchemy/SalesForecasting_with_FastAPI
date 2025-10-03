@@ -47,3 +47,8 @@ Access the built-in logger service to view application logs:
 
 > 💡 **Tip**: If after clicking the "Fetch Logs" button you see nothing, try switching to incognito mode in your browser.
 
+
+
+## Schema of DB i used 
+
+![alt text](image.png)
