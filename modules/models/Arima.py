@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 session = Session(bind=engine)
 
 router = APIRouter(
-    prefix="/api/v1/data_forecast", tags=["forecast"]
+    prefix="/api/v1/data_forecast/Arima", tags=["forecast"]
 )
 
 @router.get("/monthly_sales/product_sales_forecast")
