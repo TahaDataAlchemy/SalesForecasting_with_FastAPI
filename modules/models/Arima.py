@@ -6,12 +6,70 @@ from fastapi import APIRouter, HTTPException, Query
 from statsmodels.tsa.arima.model import ARIMA
 from modules.ORM.orm import engine
 from sqlalchemy.orm import Session
-
+from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
+import numpy as np
 session = Session(bind=engine)
 
 router = APIRouter(
     prefix="/api/v1/data_forecast/Arima", tags=["forecast"]
 )
+
+def evaluate_model(model_fit, ts):
+    """
+    Evaluate ARIMA model fitness and residuals.
+    Returns in-sample fit metrics and diagnostic information.
+    """
+    try:
+        # Get residuals
+        residuals = model_fit.resid
+        
+        # In-sample predictions
+        fitted_values = model_fit.fittedvalues
+        
+        # Calculate in-sample metrics (where fitted values exist)
+        actual = ts[len(ts) - len(fitted_values):]
+        mae = mean_absolute_error(actual, fitted_values)
+        rmse = np.sqrt(mean_squared_error(actual, fitted_values))
+        
+        # Avoid MAPE if there are zero values
+        non_zero_mask = actual != 0
+        if non_zero_mask.sum() > 0:
+            mape = mean_absolute_percentage_error(actual[non_zero_mask], fitted_values[non_zero_mask]) * 100
+        else:
+            mape = None
+        
+        # Residual statistics
+        residual_mean = float(residuals.mean())
+        residual_std = float(residuals.std())
+        
+        # Ljung-Box test p-value (tests if residuals are white noise)
+        ljung_box_pval = None
+        if hasattr(model_fit, 'test_serial_correlation'):
+            try:
+                lb_test = model_fit.test_serial_correlation(method='ljungbox', lags=min(10, len(residuals)//5))
+                ljung_box_pval = float(lb_test.iloc[0, 1])  # p-value of first lag
+            except:
+                pass
+        
+        result = {
+            "in_sample_mae": round(float(mae), 2),
+            "in_sample_rmse": round(float(rmse), 2),
+            "in_sample_mape": round(float(mape), 2) if mape else None,
+            "aic": round(float(model_fit.aic), 2),
+            "bic": round(float(model_fit.bic), 2),
+            "residual_mean": round(residual_mean, 4),
+            "residual_std": round(residual_std, 2),
+            "data_points": len(ts)
+        }
+        
+        if ljung_box_pval:
+            result["ljung_box_pval"] = round(ljung_box_pval, 4)
+        
+        return result
+    except Exception as e:
+        LOG.warning(f"Could not evaluate model: {e}")
+        return None
+
 
 @router.get("/monthly_sales/product_sales_forecast")
 async def get_product_sales_forecast(
@@ -47,6 +105,7 @@ async def get_product_sales_forecast(
         model = ARIMA(ts, order=(1, 1, 1))
         model_fit = model.fit()
 
+        evaluation = evaluate_model(model_fit,ts)
         # Forecast future months
         forecast = model_fit.forecast(steps=months_ahead)
 
@@ -69,7 +128,14 @@ async def get_product_sales_forecast(
             "history": ts.reset_index()
                         .assign(month=ts.index.strftime("%b-%Y"))
                         .to_dict(orient="records"),
-            "forecast": forecast_df.to_dict(orient="records")
+            "forecast": forecast_df.to_dict(orient="records"),
+            "evaluation_metrics": evaluation,
+            "model_info":{
+                "model_type": "ARIMA",
+                "model_order": (1, 1, 1),
+                "model_data_points": len(ts)
+            }
+
         }
 
     except Exception as e:
@@ -138,7 +204,7 @@ async def get_customer_sales_forecast(
         # Fit ARIMA model
         model = ARIMA(ts, order=(1, 1, 1))
         model_fit = model.fit()
-
+        evaluation = evaluate_model(model_fit,ts)
         # Forecast future months
         forecast = model_fit.forecast(steps=months_ahead)
 
@@ -162,7 +228,13 @@ async def get_customer_sales_forecast(
             "history": ts.reset_index()
                         .assign(month=ts.index.strftime("%b-%Y"))
                         .to_dict(orient="records"),
-            "forecast": forecast_df.to_dict(orient="records")
+            "forecast": forecast_df.to_dict(orient="records"),
+            "evaluation_metrics": evaluation,
+            "model_info":{
+                "model_type": "ARIMA",
+                "model_order": (1, 1, 1),
+                "model_data_points": len(ts)
+            }
         }
 
     except HTTPException:
@@ -213,6 +285,8 @@ async def get_city_sales_forecast(
         model = ARIMA(ts, order=(1, 1, 1))
         model_fit = model.fit()
 
+        evaluation = evaluate_model(model_fit,ts)
+
         # Forecast
         forecast = model_fit.forecast(steps=months_ahead)
 
@@ -234,7 +308,13 @@ async def get_city_sales_forecast(
             "history": ts.reset_index()
                         .assign(month=ts.index.strftime("%b-%Y"))
                         .to_dict(orient="records"),
-            "forecast": forecast_df.to_dict(orient="records")
+            "forecast": forecast_df.to_dict(orient="records"),
+            "evaluation_metrics": evaluation,
+            "model_info":{
+                "model_type": "ARIMA",
+                "model_order": (1, 1, 1),
+                "model_data_points": len(ts)
+            }
         }
 
     except HTTPException:
