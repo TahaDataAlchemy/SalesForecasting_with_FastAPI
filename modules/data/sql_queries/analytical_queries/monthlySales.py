@@ -34,8 +34,8 @@ class SalesQuery:
                     OrderDetail.unit_price * OrderDetail.quantity * (1 - OrderDetail.discount)
                 ).label("total_sales")
             )
-            .join(Order, Order.customer_id == Customer.customer_id)            # fixed
-            .join(OrderDetail, OrderDetail.order_id == Order.order_id)         # fixed
+            .join(Order, Order.customer_id == Customer.customer_id)           
+            .join(OrderDetail, OrderDetail.order_id == Order.order_id)         
             .group_by(Customer.company_name, func.date_trunc('month', Order.order_date))
             .order_by(func.date_trunc('month', Order.order_date), Customer.company_name)
         )
@@ -51,9 +51,9 @@ class SalesQuery:
                     OrderDetail.unit_price * OrderDetail.quantity * (1 - OrderDetail.discount)
                 ).label("total_sales")
             )
-            .join(Order, Order.customer_id == Customer.customer_id)            # fixed
-            .join(OrderDetail, OrderDetail.order_id == Order.order_id)         # fixed
-            .join(Product, Product.product_id == OrderDetail.product_id)       # fixed
+            .join(Order, Order.customer_id == Customer.customer_id)            
+            .join(OrderDetail, OrderDetail.order_id == Order.order_id)         
+            .join(Product, Product.product_id == OrderDetail.product_id)       
             .group_by(Customer.company_name, Product.product_name, func.date_trunc('month', Order.order_date))
             .order_by(func.date_trunc('month', Order.order_date), Customer.company_name, Product.product_name)
         )
