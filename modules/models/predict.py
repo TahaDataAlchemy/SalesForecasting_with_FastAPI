@@ -5,12 +5,6 @@ from modules.data.sql_queries.analytical_queries.monthlySales import SalesQuery
 from fastapi import APIRouter, HTTPException, Query
 from modules.ORM.orm import engine
 from sqlalchemy.orm import Session
-from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
-import numpy as np
-from statsmodels.tsa.arima.model import ARIMA
-from prophet import Prophet
-from enum import Enum
-import math
 from modules.models.modelSchema import ModelType,ForecastFrequency
 from core.utils.utils import clean_floats
 from modules.models.Prophet import forecast_with_prophet
