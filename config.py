@@ -24,6 +24,8 @@ class ConfigClass(BaseModel):
     database_host:str
     database_port:int
     database_name:str
+    groq_api_key:str
+    model_name:str
 
 CONFIG = ConfigClass(
     app_name = name,
@@ -36,4 +38,6 @@ CONFIG = ConfigClass(
     database_host=getenv("database_host"),
     database_port=int(getenv("database_port")),
     database_name=getenv("database_name"),
+    groq_api_key=getenv("groq_api_key"),
+    model_name=getenv("model_name")
 )
