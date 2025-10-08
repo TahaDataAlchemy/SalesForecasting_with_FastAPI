@@ -2,7 +2,7 @@ from modules.ORM.run_query import run_query
 from core.logger.logger import LOG
 import pandas as pd
 from modules.data.sql_queries.analytical_queries.monthlySales import SalesQuery
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query # type:ignore
 from modules.ORM.orm import engine
 from sqlalchemy.orm import Session
 from modules.models.modelSchema import ModelType,ForecastFrequency
