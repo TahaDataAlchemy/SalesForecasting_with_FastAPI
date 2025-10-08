@@ -94,3 +94,41 @@ def evaluate_prophet_model(model, forecast, prophet_df, ts):
     except Exception as e:
         LOG.warning(f"Could not evaluate Prophet model: {e}")
         return None
+
+def evaluate_xgboost_model(y_true, y_pred):
+    """
+    Evaluate XGBoost model performance
+    """
+    try:
+        mae = mean_absolute_error(y_true, y_pred)
+        rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+        
+        non_zero_mask = y_true != 0
+        if non_zero_mask.sum() > 0:
+            mape = mean_absolute_percentage_error(y_true[non_zero_mask], y_pred[non_zero_mask]) * 100
+        else:
+            mape = None
+        
+        residuals = y_true - y_pred
+        residual_mean = float(residuals.mean())
+        residual_std = float(residuals.std())
+        
+        # R-squared
+        ss_res = np.sum((y_true - y_pred) ** 2)
+        ss_tot = np.sum((y_true - y_true.mean()) ** 2)
+        r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
+        
+        result = {
+            "in_sample_mae": round(float(mae), 2),
+            "in_sample_rmse": round(float(rmse), 2),
+            "in_sample_mape": round(float(mape), 2) if mape else None,
+            "r_squared": round(float(r2), 4),
+            "residual_mean": round(residual_mean, 4),
+            "residual_std": round(residual_std, 2),
+            "data_points": len(y_true)
+        }
+        
+        return result
+    except Exception as e:
+        LOG.warning(f"Could not evaluate XGBoost model: {e}")
+        return None

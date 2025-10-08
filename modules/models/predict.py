@@ -9,6 +9,7 @@ from modules.models.modelSchema import ModelType,ForecastFrequency
 from core.utils.utils import clean_floats
 from modules.models.Prophet import forecast_with_prophet
 from modules.models.Arima import forecast_with_arima
+from modules.models.XG_boost import forecast_with_xgboost
 
 
 session = Session(bind=engine)
@@ -24,6 +25,8 @@ def generate_forecast(ts, periods_ahead, model_type: ModelType, frequency: Forec
         return forecast_with_arima(ts, periods_ahead, frequency)
     elif model_type == ModelType.PROPHET:
         return forecast_with_prophet(ts, periods_ahead, frequency)
+    elif model_type == ModelType.XGBOOST:
+        return forecast_with_xgboost(ts, periods_ahead, frequency)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
@@ -53,6 +56,13 @@ async def gete_product_sales_forecast(
         if len(ts)<3:
             raise HTTPException(status_code = 400,detail = "Not enough historical data for forecasting")
         
+        if model == ModelType.XGBOOST:
+            min_required = 60 if frequency == ForecastFrequency.DAILY else (20 if frequency == ForecastFrequency.WEEKLY else 12)
+            if len(ts) < min_required:
+                LOG.warning(f"XGBoost works best with at least {min_required} data points. Current: {len(ts)}")
+
+        forecast_df, evaluation, model_info = generate_forecast(ts, periods_ahead, model, frequency)
+        
         forecast_df,evaluation,model_info = generate_forecast(ts,periods_ahead,model,frequency)
 
         if frequency == ForecastFrequency.DAILY:
@@ -76,12 +86,12 @@ async def gete_product_sales_forecast(
         }
         
         # Prophet may return floats with NaN/inf, so we clean them
-        return clean_floats(response) if model == ModelType.PROPHET else response
+        return clean_floats(response) if model in [ModelType.PROPHET, ModelType.XGBOOST] else response
     
     except HTTPException:
         raise
     except Exception as e:
-        LOG.error(f"Error generating forecast: {e}", extra={"module": model.value})
+        LOG.error(f"Error generating forecast: {e}", extra={"model_type": model.value})
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/sales/customer_sales_forecast")
@@ -128,6 +138,11 @@ async def get_customer_sales_forecast(
 
         if len(ts) < 3:
             raise HTTPException(status_code=400, detail="Not enough historical data for forecasting")
+        
+        if model == ModelType.XGBOOST:
+            min_required = 60 if frequency == ForecastFrequency.DAILY else (20 if frequency == ForecastFrequency.WEEKLY else 12)
+            if len(ts) < min_required:
+                LOG.warning(f"XGBoost works best with at least {min_required} data points. Current: {len(ts)}")
 
         forecast_df, evaluation, model_info = generate_forecast(ts, periods_ahead, model, frequency)
 
@@ -152,12 +167,12 @@ async def get_customer_sales_forecast(
         }
 
         # Prophet often has float precision/NaN issues, so clean
-        return clean_floats(response) if model == ModelType.PROPHET else response
+        return clean_floats(response) if model in [ModelType.PROPHET, ModelType.XGBOOST] else response
 
     except HTTPException:
         raise
     except Exception as e:
-        LOG.error(f"Error generating forecast: {e}", extra={"module": model.value})
+        LOG.error(f"Error generating forecast: {e}", extra={"model_type": model.value})
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/sales/city_wise_forecast")
@@ -186,6 +201,13 @@ async def get_city_sales_forecast(
         ts = df.groupby("period")["total_sales"].sum().sort_index()
         if len(ts) < 3:
             raise HTTPException(status_code=400, detail="Not enough historical data for forecasting")
+        
+        if model == ModelType.XGBOOST:
+            min_required = 60 if frequency == ForecastFrequency.DAILY else (20 if frequency == ForecastFrequency.WEEKLY else 12)
+            if len(ts) < min_required:
+                LOG.warning(f"XGBoost works best with at least {min_required} data points. Current: {len(ts)}")
+
+        forecast_df, evaluation, model_info = generate_forecast(ts, periods_ahead, model, frequency)
 
         forecast_df, evaluation, model_info = generate_forecast(ts, periods_ahead, model, frequency)
 
@@ -208,10 +230,10 @@ async def get_city_sales_forecast(
             "model_info": model_info
         }
 
-        return clean_floats(response) if model == ModelType.PROPHET else response
+        return clean_floats(response) if model in [ModelType.PROPHET, ModelType.XGBOOST] else response
 
     except HTTPException:
         raise
     except Exception as e:
-        LOG.error(f"Error generating city forecast: {e}", extra={"module": model.value})
+        LOG.error(f"Error generating city forecast: {e}", extra={"model_type": model.value})
         raise HTTPException(status_code=500, detail="Internal server error")
