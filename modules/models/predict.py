@@ -10,7 +10,8 @@ from core.utils.utils import clean_floats
 from modules.models.Prophet import forecast_with_prophet
 from modules.models.Arima import forecast_with_arima
 from modules.models.XG_boost import forecast_with_xgboost
-
+from modules.LLM.LLM_analyzer import analyze_forecast
+import json
 
 session = Session(bind=engine)
 
@@ -84,6 +85,8 @@ async def gete_product_sales_forecast(
             "evaluation_metrics": evaluation,
             "model_info": model_info
         }
+        llm_response = analyze_forecast(json.dumps(response))
+        response["llm_analysis"] = llm_response
         
         # Prophet may return floats with NaN/inf, so we clean them
         return clean_floats(response) if model in [ModelType.PROPHET, ModelType.XGBOOST] else response
@@ -165,6 +168,8 @@ async def get_customer_sales_forecast(
             "evaluation_metrics": evaluation,
             "model_info": model_info
         }
+        llm_response = analyze_forecast(json.dumps(response))
+        response["llm_analysis"] = llm_response
 
         # Prophet often has float precision/NaN issues, so clean
         return clean_floats(response) if model in [ModelType.PROPHET, ModelType.XGBOOST] else response
@@ -229,6 +234,8 @@ async def get_city_sales_forecast(
             "evaluation_metrics": evaluation,
             "model_info": model_info
         }
+        llm_response = analyze_forecast(json.dumps(response))
+        response["llm_analysis"] = llm_response
 
         return clean_floats(response) if model in [ModelType.PROPHET, ModelType.XGBOOST] else response
 
