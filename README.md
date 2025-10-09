@@ -52,3 +52,7 @@ Access the built-in logger service to view application logs:
 ## Schema of DB i used 
 
 ![alt text](image.png)
+
+## Flow of Application
+
+![alt text](image-1.png)
