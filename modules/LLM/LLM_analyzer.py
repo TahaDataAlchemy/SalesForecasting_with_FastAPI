@@ -5,18 +5,6 @@ from modules.LLM.prompt import SYSTEM_PROMPT
 from config import CONFIG
 import json
 from core.logger.logger import LOG
-# os.environ["GROQ_API_KEY"] = CONFIG.groq_api_key
-
-# llm = ChatGroq(model=CONFIG.model_name)
-
-# def analyze_forecast(user_input:str):
-#     messages = [
-#         SystemMessage(content=SYSTEM_PROMPT),
-#         HumanMessage(content=user_input)
-#     ]
-#     response = llm.invoke(messages,
-#                           response_format = {"type":"json_object"})
-#     return response.content
 
 os.environ["GROQ_API_KEY"] = CONFIG.groq_api_key
 
