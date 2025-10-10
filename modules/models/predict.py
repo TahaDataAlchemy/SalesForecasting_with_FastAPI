@@ -13,6 +13,7 @@ from modules.models.XG_boost import forecast_with_xgboost
 from modules.LLM.LLM_analyzer import analyze_forecast
 import json
 
+
 session = Session(bind=engine)
 
 router = APIRouter(
@@ -232,7 +233,7 @@ async def get_city_sales_forecast(
             "history": history_df.to_dict(orient="records"),
             "forecast": forecast_df.to_dict(orient="records"),
             "evaluation_metrics": evaluation,
-            "model_info": model_info
+            "model_info": model_info,     
         }
         llm_response = analyze_forecast(json.dumps(response))
         response["llm_analysis"] = llm_response
