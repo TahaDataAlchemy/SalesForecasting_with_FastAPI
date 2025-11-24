@@ -480,15 +480,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👤 Author
-
-**Mubashir Ahmed**
-
-- Email: mubashirsidiki@gmail.com
-- GitHub: [@mubashirsidiki](https://github.com/mubashirsidiki)
-
----
-
 <div align="center">
 
 **Built with ❤️ using FastAPI**
